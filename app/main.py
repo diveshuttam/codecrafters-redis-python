@@ -24,7 +24,7 @@ def handle_set(args):
         if args[3].upper() == "PX":
             key = args[0]
             value = args[1]
-            expiry = args[2]
+            expiry = args[4]
             expiry_time = time.time() + int(expiry)
             redis_dict[key] = (value, expiry_time)
             print("SET command with args:", args)
