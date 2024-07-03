@@ -13,8 +13,14 @@ def main():
     server_socket.listen(1)
     while True:
         client_socket, addr = server_socket.accept()
+        # read packets from client_socket and send responses
         print("Connection from", addr)
-        client_socket.sendall(b"+PONG\r\n")
+        while True:
+            data = client_socket.recv(1024)
+            print("Received", data)
+            if not data:
+                break
+            client_socket.sendall(b"+PONG\r\n")
 
 
 if __name__ == "__main__":
