@@ -29,7 +29,7 @@ def main():
         # handle client in a separate thread
         thread = threading.Thread(target=handle_client, args=(client_socket,))
         thread.start()
-        thread.join() 
+        # thread.join() 
 
 if __name__ == "__main__":
     main()
