@@ -248,6 +248,7 @@ class RedisServer:
             print("replicating SET command")
             slave_socket.sendall(data)
             print("sent to slave")
+        slave_socket.close()
 
     def start(self):
         server_socket = socket.create_server(("localhost", self.port), reuse_port=True)
