@@ -174,6 +174,7 @@ class RedisServer:
                 break
             command, args = self._parse_data(data)
             handler = dispatcher.get(command)
+            print("Command: ", command)
             if handler:
                 if command == "PSYNC" or command == "REPLCONF":
                     response = handler(args, client_socket)
