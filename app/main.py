@@ -8,12 +8,24 @@ import string
 
 
 class RedisServer:
-    def __init__(self, port=6379, role="master"):
+    def __init__(self, port=6379, role="master", master_host=None, master_port=None):
         self.port = port
         self.role = role  # Store the role of the server
-        self.master_replid = self._generate_random_id()  # Generate a random master replication ID
+        self.master_replid = '8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb' # Hardcoded master replication ID
         self.master_repl_offset = 0  # Replication offset initialized to 0
+        self.master_host = master_host
+        self.master_port = master_port
+        if role == 'slave':
+            self._connect_to_master()
         self.redis_dict = {}
+    
+    def _connect_to_master(self):
+        # Establish a connection to the master server
+        self.master_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.master_socket.connect((self.master_host, int(self.master_port)))
+        # Send PING command to master
+        self.master_socket.sendall(b"*1\r\n$4\r\nPING\r\n")
+        # For now, we won't handle the response, but in a real scenario, you should wait for and handle the PONG response.
 
     def _generate_random_id(self, length=40):
         # Generates a random string of upper and lowercase letters and digits.
