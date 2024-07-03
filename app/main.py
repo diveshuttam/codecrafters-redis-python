@@ -127,7 +127,7 @@ class RedisServer:
         slave_host, slave_port = slave_address
         # Connect to the slave and keep it handy
         slave_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        slave_socket.connect((slave_host, slave_port))
+        slave_socket.connect(slave_host, slave_port)
         self.slave_connections.append(slave_socket)
 
         return response
