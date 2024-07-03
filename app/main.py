@@ -14,7 +14,7 @@ def main():
     while True:
         client_socket, addr = server_socket.accept()
         print("Connection from", addr)
-        client_socket.sendall(b"+PONG\n")
+        client_socket.sendall(b"+PONG\r\n")
 
 
 if __name__ == "__main__":
