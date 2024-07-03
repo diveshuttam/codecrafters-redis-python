@@ -100,15 +100,13 @@ class RedisServer:
         # For now, we ignore the arguments and simply return +OK\r\n
         return b"+OK\r\n"
 
-    def _handle_psync(self, args, client_socket):
+    def _handle_psync(self, args):
         # Construct the FULLRESYNC response
         fullresync_response = f"+FULLRESYNC {self.replication_id} {self.replication_offset}\r\n"
-        client_socket.send(fullresync_response.encode())
+        response = bytes(fullresync_response, 'utf-8')
 
-        # Send the empty RDB file after FULLRESYNC response
-        self._send_empty_rdb(client_socket)
 
-    def _send_empty_rdb(self, client_socket):
+    def _send_empty_rdb(self):
         # Base64 representation of the empty RDB file
         empty_rdb_base64 = "UkVESVMwMDEx+glyZWRpcy12ZXIFNy4yLjD6CnJlZGlzLWJpdHPAQPoFY3RpbWXCbQi8ZfoIdXNlZC1tZW3CsMQQAPoIYW9mLWJhc2XAAP/wbjv+wP9aog=="
         # Decode the Base64 string to get the binary content of the RDB file
@@ -116,7 +114,7 @@ class RedisServer:
         # Prepare the RDB file content in the required format
         rdb_file_message = f"${len(empty_rdb_content)}\r\n".encode() + empty_rdb_content
         # Send the RDB file content to the replica
-        client_socket.send(rdb_file_message)
+        client_socket.send(rdb_file_message)dd
 
     def _parse_data(self, data):
         if data.startswith(b'*'):
