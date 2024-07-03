@@ -56,12 +56,10 @@ class RedisServer:
         print(f"PSYNC response: {psync_response}")
         # Parse the PSYNC response
         response_lines = psync_response.split(b'\r\n')
-        
-        # # start processing the commands from master in a separate thread
-        # self.master_thread = threading.Thread(target=self._handle_master, args=(self.master_socket,))
-        # self.master_thread.start()
-        # self.master_thread.join()
-        self.master_socket.close()
+
+        # start processing the commands from master in a separate thread
+        master_thread = threading.Thread(target=self._handle_master, args=(self.master_socket,))
+        master_thread.start()
         
     def _handle_master(self, master_socket):
         while True:
@@ -162,7 +160,7 @@ class RedisServer:
         # self._connect_to_slaves()
 
         # for now just putting the same socket (client_socket) in the list
-        # self.slave_connections.append(client_socket)
+        self.slave_connections.append(client_socket)
 
         return response
 
@@ -216,27 +214,14 @@ class RedisServer:
                 else:    
                     response = handler(args)
 
-                # don't send response if role is slave and connection is coming from master
-                if self.role == "slave" and self.master_host == client_socket.getpeername()[0]:
-                    continue
-
                 client_socket.sendall(response)
                     
                 # replicate appropriate commands to the slave
                 if(role == "master"):
                     print("replicating to slave")
-                    for slave in self.slave_addresses:
-                        # connect to the slave and send the command
-                        count = 0
-                        max_count = 3
-                        while(count<max_count):
-                            try:
-                                self.replicate_to_slave(data, command, slave)
-                                count += 1
-                            except:
-                                print("Error replicating to slave")
-                                time.sleep(0.1)
-                                continue
+                    for slave in self.slave_connections:
+                        if(command == "SET"):
+                            slave.sendall(data)
             else:
                 client_socket.sendall(b"-ERR unknown command\r\n")
 
