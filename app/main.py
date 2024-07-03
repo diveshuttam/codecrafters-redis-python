@@ -1,6 +1,7 @@
 # Uncomment this to pass the first stage
 import socket
 import threading
+import time
 
 global redis_dict
 redis_dict = {}
@@ -9,10 +10,26 @@ def handle_set(args):
     # Handle SET command
     # Example: SET key value
     # args[0] is the key, args[1] is the value
-    key = args[0]
-    value = args[2]
-    redis_dict[key] = value
-    print("SET command with args:", args)
+    if len(args) != 2:
+        return b"-ERR wrong number of arguments for 'set' command\r\n"
+
+    if len(args) == 2:
+        key = args[0]
+        value = args[1]
+        redis_dict[key] = (value, None)
+        print("SET command with args:", args)
+    
+    # handle expiry
+    if len(args) == 4:
+        if args[3].upper() == "PX":
+            key = args[0]
+            value = args[1]
+            expiry = args[2]
+            expiry_time = time.time() + int(expiry)
+            redis_dict[key] = (value, expiry_time)
+            print("SET command with args:", args)
+
+
     return b"+OK\r\n"
 
 def handle_get(args):
@@ -20,6 +37,12 @@ def handle_get(args):
     print("GET command with args:", args)
     key = args[0]
     value = redis_dict.get(key)
+    # discard expired keys
+    if value and value[1] < time.time():
+        del redis_dict[key]
+        value = None
+        value = value[0] if value else None
+
     if value:
         return b"$" + bytes(str(len(value)), 'utf-8') + b"\r\n" + value + b"\r\n"
     else:
@@ -38,7 +61,9 @@ def parse_data(data):
         # print(lines)
         command = lines[2].upper()  # Assuming the command is the first bulk string
         # print(command)
-        args = lines[4:-1]  # Assuming the rest are arguments
+        args = lines[4:-1]  # Assuming the rest are arguments (excluding the last empty line)
+        # for cases like [b'foo', b'$3', b'bar'] remove the b'$3' etc
+        args = [arg for i, arg in enumerate(args) if i % 2 == 0]
         return command.decode(), args
     elif data.startswith(b'+'):
         # Simple string
