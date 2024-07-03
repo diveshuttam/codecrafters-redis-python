@@ -117,8 +117,9 @@ class RedisServer:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--port", type=int, default=6379)
-    parser.add_argument("--replicaof", nargs='*', help="Start as a replica of the specified master")
+    parser.add_argument("--replicaof", nargs=2, help="Start as a replica of the specified master. Expects 'host port'.")
     args = parser.parse_args()
     role = 'slave' if args.replicaof else 'master'  # Determine the role based on the --replicaof flag
-    server = RedisServer(args.port, role)
+    master_host, master_port = args.replicaof if args.replicaof else (None, None)
+    server = RedisServer(args.port, role, master_host, master_port)
     server.start()
