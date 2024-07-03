@@ -27,7 +27,8 @@ def main():
                 client_socket.sendall(b"+PONG\r\n")
         
         # handle client in a separate thread
-        thread  = threading.Thread(target=handle_client, args=(client_socket,)).start()
+        thread = threading.Thread(target=handle_client, args=(client_socket,))
+        thread.start()
         thread.join() 
 
 if __name__ == "__main__":
