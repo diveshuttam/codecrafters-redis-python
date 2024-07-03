@@ -7,6 +7,7 @@ import string
 
 
 
+
 class RedisServer:
     def __init__(self, port=6379, role="master", master_host=None, master_port=None):
         self.port = port
@@ -20,12 +21,29 @@ class RedisServer:
         self.redis_dict = {}
     
     def _connect_to_master(self):
-        # Establish a connection to the master server
         self.master_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.master_socket.connect((self.master_host, int(self.master_port)))
+        
         # Send PING command to master
         self.master_socket.sendall(b"*1\r\n$4\r\nPING\r\n")
-        # For now, we won't handle the response, but in a real scenario, you should wait for and handle the PONG response.
+        # Wait for PING response
+        ping_response = self.master_socket.recv(1024)
+        print(f"PING response: {ping_response}")  # For debugging
+        
+        # Send REPLCONF listening-port <PORT>
+        replconf_listen_cmd = f"*3\r\n$8\r\nREPLCONF\r\n$14\r\nlistening-port\r\n${len(str(self.port))}\r\n{self.port}\r\n".encode()
+        self.master_socket.sendall(replconf_listen_cmd)
+        # Wait for REPLCONF listening-port response
+        replconf_listen_response = self.master_socket.recv(1024)
+        print(f"REPLCONF listening-port response: {replconf_listen_response}")  # For debugging
+        
+        # Send REPLCONF capa psync2
+        replconf_capa_cmd = b"*3\r\n$8\r\nREPLCONF\r\n$4\r\ncapa\r\n$6\r\npsync2\r\n"
+        self.master_socket.sendall(replconf_capa_cmd)
+        # Wait for REPLCONF capa response
+        replconf_capa_response = self.master_socket.recv(1024)
+        print(f"REPLCONF capa response: {replconf_capa_response}")  # For debugging
+
 
     def _generate_random_id(self, length=40):
         # Generates a random string of upper and lowercase letters and digits.
