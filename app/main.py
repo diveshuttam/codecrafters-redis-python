@@ -125,7 +125,7 @@ class RedisServer:
         # Get a slave connection ready set the save connected setting as true
         slave_address = self.slave_addresses.pop(0)
         slave_host, slave_port = slave_address
-        print("address" : slave_address)
+        print("address", lave_address)
         # Connect to the slave and keep it handy
         slave_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM))
         slave_socket.connect((slave_host, slave_port))
