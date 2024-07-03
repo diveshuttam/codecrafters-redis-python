@@ -22,7 +22,7 @@ def parse_data(data):
     if data.startswith(b'*'):
         # Array type, split lines and parse each
         lines = data.split(b'\r\n')
-        command = lines[1][1:].decode().upper()  # Assuming the command is the first bulk string
+        command = lines[1][:].decode().upper()  # Assuming the command is the first bulk string
         args = [line[1:].decode() for line in lines[2:-2]]  # Decode each argument
         return command, args
     elif data.startswith(b'+'):
