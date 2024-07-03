@@ -51,7 +51,34 @@ class RedisServer:
         # Send PSYNC ? -1
         psync_cmd = b"*3\r\n$5\r\nPSYNC\r\n$1\r\n?\r\n$2\r\n-1\r\n"
         self.master_socket.sendall(psync_cmd)
-        # For this stage, we're not handling the response to PSYNC
+        # Wait for PSYNC response
+        psync_response = self.master_socket.recv(1024)
+        print(f"PSYNC response: {psync_response}")
+        # Parse the PSYNC response
+        response_lines = psync_response.split(b'\r\n')
+        if response_lines[0] == b"+FULLRESYNC":
+            self.replication_id, self.replication_offset = response_lines[1].split()
+            print(f"Replication ID: {self.replication_id}, Replication Offset: {self.replication_offset}")
+            # if the replica gets empty RDB file, ignore it
+            if response_lines[2] == b"$-1":
+                return
+        
+        # start processing the commands from master in a separate thread
+        self.master_thread = threading.Thread(target=self._handle_master, args=(self.master_socket,))
+        self.master_thread.start()
+        
+    def _handle_master(self, master_socket):
+        while True:
+            data = master_socket.recv(1024)
+            if not data:
+                break
+            command, args = self._parse_data(data)
+            handler = self._command_dispatcher().get(command)
+            if handler:
+                response = handler(args)
+                # master_socket.sendall(response)
+            else:
+                master_socket.sendall(b"-ERR unknown command\r\n")
 
 
     def _generate_random_id(self, length=40):
