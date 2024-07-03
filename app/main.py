@@ -221,19 +221,19 @@ class RedisServer:
                     continue
 
                 client_socket.sendall(response)
-
-                # if command is psync, then we need get the connections ready
-                if command == "PSYNC" and self.role == "master":
-                    time.sleep(1)
-                    self._connect_to_slaves()
                     
                 # replicate appropriate commands to the slave
                 print(self.slave_connections)
-                for slave in self.slave_connections:
+                for slave in self.slave_addresses:
+                    # connect to the slave
+                    slave = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    slave.connect((slave[0], slave[1]))
+
                     if command == "SET":
                         print("replicating SET command")
                         slave.sendall(data)
                         print("sent to slave")
+                    slave.close()
             else:
                 client_socket.sendall(b"-ERR unknown command\r\n")
 
