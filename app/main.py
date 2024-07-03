@@ -107,7 +107,7 @@ class RedisServer:
             # Update the port number to the new value
             port = int(config_value)
             # save this in the saves connections
-            self.slave_addresses.append((client_socket.getpeername(), port))
+            self.slave_addresses.append((client_socket.getpeername()[0], port))
             # Send a success response
             return b"+OK\r\n"
         elif config_param == "capa":
