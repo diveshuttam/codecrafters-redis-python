@@ -9,7 +9,12 @@ def main():
     # Uncomment this to pass the first stage
     #
     server_socket = socket.create_server(("localhost", 6379), reuse_port=True)
-    server_socket.accept() # wait for client
+    
+    server_socket.listen(1)
+    while True:
+        client_socket, addr = server_socket.accept()
+        print("Connection from", addr)
+        client_socket.sendall(b"+PONG\n")
 
 
 if __name__ == "__main__":
