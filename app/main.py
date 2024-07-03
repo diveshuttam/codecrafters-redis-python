@@ -56,23 +56,21 @@ class RedisServer:
         print(f"PSYNC response: {psync_response}")
         # Parse the PSYNC response
         response_lines = psync_response.split(b'\r\n')
-        if response_lines[0] == b"+FULLRESYNC":
-            self.replication_id, self.replication_offset = response_lines[1].split()
-            print(f"Replication ID: {self.replication_id}, Replication Offset: {self.replication_offset}")
-            # if the replica gets empty RDB file, ignore it
-            if response_lines[2] == b"$-1":
-                return
         
-        # start processing the commands from master in a separate thread
-        self.master_thread = threading.Thread(target=self._handle_master, args=(self.master_socket,))
-        self.master_thread.start()
+        # # start processing the commands from master in a separate thread
+        # self.master_thread = threading.Thread(target=self._handle_master, args=(self.master_socket,))
+        # self.master_thread.start()
+        # self.master_thread.join()
+        self.master_socket.close()
         
     def _handle_master(self, master_socket):
         while True:
+            print("in master thread")
             data = master_socket.recv(1024)
             if not data:
                 break
             command, args = self._parse_data(data)
+            print("Command for slave: ", command)
             handler = self._command_dispatcher().get(command)
             if handler:
                 response = handler(args)
@@ -164,7 +162,7 @@ class RedisServer:
         # self._connect_to_slaves()
 
         # for now just putting the same socket (client_socket) in the list
-        self.slave_connections.append(client_socket)
+        # self.slave_connections.append(client_socket)
 
         return response
 
@@ -217,11 +215,25 @@ class RedisServer:
                     response = handler(args, client_socket)
                 else:    
                     response = handler(args)
+
+                # don't send response if role is slave and connection is coming from master
+                if self.role == "slave" and self.master_host == client_socket.getpeername()[0]:
+                    continue
+
                 client_socket.sendall(response)
+
+                # if command is psync, then we need get the connections ready
+                if command == "PSYNC" and self.role == "master":
+                    time.sleep(1)
+                    self._connect_to_slaves()
+                    
                 # replicate appropriate commands to the slave
+                print(self.slave_connections)
                 for slave in self.slave_connections:
                     if command == "SET":
+                        print("replicating SET command")
                         slave.sendall(data)
+                        print("sent to slave")
             else:
                 client_socket.sendall(b"-ERR unknown command\r\n")
 
@@ -245,4 +257,5 @@ if __name__ == "__main__":
     else:
         master_host, master_port = (None, None)
     server = RedisServer(args.port, role, master_host, master_port)
+    print(f"Starting server on port {args.port} as {role}")
     server.start()
