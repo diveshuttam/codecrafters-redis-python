@@ -36,6 +36,16 @@ class RedisServer:
 
     def _handle_del(self, args):
         return b":0\r\n"
+    
+    def _handle_info(self, args):
+        # For now, we only support the replication section and return the role as master.
+        if args and args[0].decode().lower() == "replication":
+            info_response = "role:master\r\n"
+            return b"$" + bytes(str(len(info_response)), 'utf-8') + b"\r\n" + bytes(info_response, 'utf-8') + b"\r\n"
+        else:
+            # If INFO is called without arguments or with other sections, return an empty response.
+            # This behavior will be expanded in future stages.
+            return b"$0\r\n"
 
     def _parse_data(self, data):
         if data.startswith(b'*'):
@@ -56,6 +66,7 @@ class RedisServer:
             "DEL": self._handle_del,
             "ECHO": lambda args: b"$" + bytes(str(len(args[0])), 'utf-8') + b"\r\n" + args[0] + b"\r\n",
             "PING": lambda args: b"+PONG\r\n",
+            "INFO": self._handle_info,  # Add the INFO command handler here
         }
 
     def _handle_client(self, client_socket):
