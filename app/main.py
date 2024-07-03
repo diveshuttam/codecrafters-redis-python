@@ -4,8 +4,9 @@ import time
 import argparse
 
 class RedisServer:
-    def __init__(self, port=6379):
+    def __init__(self, port=6379, role="master"):
         self.port = port
+        self.role = role  # Store the role of the server
         self.redis_dict = {}
 
     def _handle_set(self, args):
@@ -38,15 +39,13 @@ class RedisServer:
         return b":0\r\n"
     
     def _handle_info(self, args):
-        # For now, we only support the replication section and return the role as master.
+        # Extend the INFO command to support returning the role based on the server's role
         if args and args[0].decode().lower() == "replication":
-            info_response = "role:master\r\n"
+            info_response = f"role:{self.role}\r\n"
             return b"$" + bytes(str(len(info_response)), 'utf-8') + b"\r\n" + bytes(info_response, 'utf-8') + b"\r\n"
         else:
-            # If INFO is called without arguments or with other sections, return an empty response.
-            # This behavior will be expanded in future stages.
             return b"$0\r\n"
-
+        
     def _parse_data(self, data):
         if data.startswith(b'*'):
             lines = data.split(b'\r\n')
@@ -94,7 +93,8 @@ class RedisServer:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--port", type=int, default=6379)
+    parser.add_argument("--replicaof", nargs='*', help="Start as a replica of the specified master")
     args = parser.parse_args()
-
-    server = RedisServer(args.port)
+    role = 'slave' if args.replicaof else 'master'  # Determine the role based on the --replicaof flag
+    server = RedisServer(args.port, role)
     server.start()
