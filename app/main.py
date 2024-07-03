@@ -15,11 +15,12 @@ class RedisServer:
         self.master_repl_offset = 0  # Replication offset initialized to 0
         self.redis_dict = {}
 
-    def _generate_random_id(length=40):
+    def _generate_random_id(self, length=40):
         # Generates a random string of upper and lowercase letters and digits.
         characters = string.ascii_letters + string.digits
         random_id = ''.join(random.choice(characters) for _ in range(length))
         return random_id
+
     def _handle_set(self, args):
         if len(args) == 2:
             key = args[0]
