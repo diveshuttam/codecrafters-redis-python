@@ -66,6 +66,7 @@ class RedisServer:
         while True:
             print("in master thread")
             data = master_socket.recv(1024)
+            print("master thread data", data)
             if not data:
                 break
             command, args = self._parse_data(data)
