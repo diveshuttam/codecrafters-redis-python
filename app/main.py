@@ -127,7 +127,7 @@ class RedisServer:
             "PING": lambda args: b"+PONG\r\n",
             "INFO": self._handle_info,
             "REPLCONF": self._handle_replconf,
-            
+            "PSYNC": self._handle_psync,
         }
 
     def _handle_client(self, client_socket):
