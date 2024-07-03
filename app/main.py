@@ -10,41 +10,42 @@ def handle_set(args):
     # Handle SET command
     # Example: SET key value
     # args[0] is the key, args[1] is the value
-    if len(args) != 2:
-        return b"-ERR wrong number of arguments for 'set' command\r\n"
-
+    print(len(args))
     if len(args) == 2:
         key = args[0]
         value = args[1]
         redis_dict[key] = (value, None)
         print("SET command with args:", args)
+        return b"+OK\r\n"
     
     # handle expiry
-    if len(args) == 4:
-        if args[3].upper() == "PX":
+    elif len(args) == 4:
+        print('here on')
+        if args[2].decode().upper() == "PX":
+            print("here")
             key = args[0]
             value = args[1]
-            expiry = args[4]
-            expiry_time = time.time() + int(expiry)
+            expiry = args[3]
+            # assume expiry is in milliseconds
+
+            expiry_time = time.time()*1000 + int(expiry)
             redis_dict[key] = (value, expiry_time)
             print("SET command with args:", args)
-
-
-    return b"+OK\r\n"
-
+            return b"+OK\r\n"
+    
+    return b"-ERR wrong number of arguments for 'set' command\r\n"
+    
 def handle_get(args):
     # Handle GET command
     print("GET command with args:", args)
     key = args[0]
     value = redis_dict.get(key)
     # discard expired keys
-    if value and value[1] < time.time():
-        del redis_dict[key]
-        value = None
-        value = value[0] if value else None
-
     if value:
-        return b"$" + bytes(str(len(value)), 'utf-8') + b"\r\n" + value + b"\r\n"
+        if value[1] and value[1] < time.time()*1000:
+            del redis_dict[key]
+            return b"$-1\r\n"
+        return b"$" + bytes(str(len(value[0])), 'utf-8') + b"\r\n" + value[0] + b"\r\n"
     else:
         return b"$-1\r\n"  # Example: pretend the key does not exist
 
