@@ -18,12 +18,19 @@ def handle_del(args):
     return b":0\r\n"  # Example: pretend the key does not exist
 
 def parse_data(data):
-    # Simple parser for commands based on RESP
-    # This is a very basic implementation and needs to be expanded for full RESP support
-    parts = data.decode().strip().split()
-    command = parts[0].upper()  # Command is always uppercase
-    args = parts[1:]
-    return command, args
+    """Parse a simple RESP string."""
+    if data.startswith(b'*'):
+        # Array type, split lines and parse each
+        lines = data.split(b'\r\n')
+        command = lines[1][1:].decode().upper()  # Assuming the command is the first bulk string
+        args = [line[1:].decode() for line in lines[2:-2]]  # Decode each argument
+        return command, args
+    elif data.startswith(b'+'):
+        # Simple string
+        return data[1:].decode().strip(), []
+    # Add more cases here for other RESP types like Errors (-), Integers (:), Bulk Strings ($)
+    else:
+        raise ValueError("Unsupported RESP type")
 
 def command_dispatcher():
     # Maps command names to their handler functions
@@ -43,6 +50,7 @@ def handle_client(client_socket):
         if not data:
             break
         command, args = parse_data(data)
+        print(command, args)        
         handler = dispatcher.get(command)
         if handler:
             response = handler(args)
