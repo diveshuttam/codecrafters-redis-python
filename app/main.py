@@ -11,17 +11,19 @@ import base64
 class RedisServer:
     def __init__(self, port=6379, role="master", master_host=None, master_port=None):
         self.port = port
-        self.role = role  # Store the role of the server
-        self.master_replid = '8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb' # Hardcoded master replication ID
-        self.master_repl_offset = 0  # Replication offset initialized to 0
+        self.role = role
+        self.master_replid = '8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb'
+        self.master_repl_offset = 0
         self.replication_id = "8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb"
         self.replication_offset = 0
         self.master_host = master_host
         self.master_port = master_port
+        self.slave_addresses = []  # List to store slave connections
+        self.slave_connections = []  # List to store slave connections
+        self.redis_dict = {}
         if role == 'slave':
             self._connect_to_master()
-        self.redis_dict = {}
-    
+         
     def _connect_to_master(self):
         self.master_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.master_socket.connect((self.master_host, int(self.master_port)))
@@ -96,16 +98,38 @@ class RedisServer:
             return b"$0\r\n"
 
         
-    def _handle_replconf(self, args):
-        # For now, we ignore the arguments and simply return +OK\r\n
-        return b"+OK\r\n"
+    def _handle_replconf(self, args, client_socket):
+        # Parse the arguments to get the configuration parameter and its value
+        config_param = args[0].decode().lower()
+        config_value = args[1].decode().lower()
+        # Check if the configuration parameter is "listening-port"
+        if config_param == "listening-port":
+            # Update the port number to the new value
+            port = int(config_value)
+            # save this in the saves connections
+            self.slave_addresses.append((client_socket.getpeername(), port))
+            # Send a success response
+            return b"+OK\r\n"
+        elif config_param == "capa":
+            return b"+OK\r\n"
+        # Send an error response for unsupported configuration parameters
+        return b"-ERR Unsupported CONFIG parameter\r\n"
 
-    def _handle_psync(self, args):
+    def _handle_psync(self, args, client_socket):
         # Construct the FULLRESYNC response
         fullresync_response = f"+FULLRESYNC {self.replication_id} {self.replication_offset}\r\n"
         response = bytes(fullresync_response, 'utf-8')
         # Send the empty RDB file to the replica
         response += self._send_empty_rdb()
+
+        # Get a slave connection ready set the save connected setting as true
+        slave_address = self.slave_addresses.pop(0)
+        slave_host, slave_port = slave_address
+        # Connect to the slave and keep it handy
+        slave_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        slave_socket.connect((slave_host, slave_port))
+        self.slave_connections.append(slave_socket)
+
         return response
 
     def _send_empty_rdb(self):
@@ -151,8 +175,14 @@ class RedisServer:
             command, args = self._parse_data(data)
             handler = dispatcher.get(command)
             if handler:
+                if command == "PSYNC" or command == "REPLCONF":
+                    response = handler(args, client_socket)
                 response = handler(args)
                 client_socket.sendall(response)
+                # replicate appropriate commands to the slave
+                for slave in self.slave_connections:
+                    if command == "SET":
+                        slave.sendall(data)
             else:
                 client_socket.sendall(b"-ERR unknown command\r\n")
 
