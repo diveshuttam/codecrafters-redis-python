@@ -14,6 +14,8 @@ class RedisServer:
         self.role = role  # Store the role of the server
         self.master_replid = '8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb' # Hardcoded master replication ID
         self.master_repl_offset = 0  # Replication offset initialized to 0
+        self.replication_id = "8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb"
+        self.replication_offset = 0
         self.master_host = master_host
         self.master_port = master_port
         if role == 'slave':
@@ -48,7 +50,7 @@ class RedisServer:
         psync_cmd = b"*3\r\n$5\r\nPSYNC\r\n$1\r\n?\r\n$2\r\n-1\r\n"
         self.master_socket.sendall(psync_cmd)
         # For this stage, we're not handling the response to PSYNC
-        
+
 
     def _generate_random_id(self, length=40):
         # Generates a random string of upper and lowercase letters and digits.
@@ -93,6 +95,17 @@ class RedisServer:
         else:
             return b"$0\r\n"
 
+        
+    def _handle_replconf(self, args):
+        # For now, we ignore the arguments and simply return +OK\r\n
+        return b"+OK\r\n"
+
+    def _handle_psync(self, args):
+        # Since the PSYNC command for initial connection is always 'PSYNC ? -1',
+        # we respond with '+FULLRESYNC <REPL_ID> 0\r\n'
+        response = f"+FULLRESYNC {self.replication_id} {self.replication_offset}\r\n"
+        return response.encode()
+
     def _parse_data(self, data):
         if data.startswith(b'*'):
             lines = data.split(b'\r\n')
@@ -113,7 +126,8 @@ class RedisServer:
             "ECHO": lambda args: b"$" + bytes(str(len(args[0])), 'utf-8') + b"\r\n" + args[0] + b"\r\n",
             "PING": lambda args: b"+PONG\r\n",
             "INFO": self._handle_info,
-            "REPLCONF": lambda args: b"+OK\r\n"  # Add the REPLCONF command handler here
+            "REPLCONF": self._handle_replconf,
+            
         }
 
     def _handle_client(self, client_socket):
