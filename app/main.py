@@ -226,16 +226,28 @@ class RedisServer:
                 if(role == "master"):
                     print("replicating to slave")
                     for slave in self.slave_addresses:
-                        # connect to the slave
-                        slave_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                        slave_socket.connect((slave[0], slave[1]))
-
-                        if command == "SET":
-                            print("replicating SET command")
-                            slave_socket.sendall(data)
-                            print("sent to slave")
+                        # connect to the slave and send the command
+                        count = 0
+                        max_count = 3
+                        while(count<max_count):
+                            try:
+                                self.replicate_to_slave(data, command, slave)
+                                count += 1
+                            except:
+                                print("Error replicating to slave")
+                                time.sleep(0.1)
+                                continue
             else:
                 client_socket.sendall(b"-ERR unknown command\r\n")
+
+    def replicate_to_slave(self, data, command, slave):
+        slave_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        slave_socket.connect((slave[0], slave[1]))
+
+        if command == "SET":
+            print("replicating SET command")
+            slave_socket.sendall(data)
+            print("sent to slave")
 
     def start(self):
         server_socket = socket.create_server(("localhost", self.port), reuse_port=True)
