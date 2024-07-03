@@ -223,17 +223,17 @@ class RedisServer:
                 client_socket.sendall(response)
                     
                 # replicate appropriate commands to the slave
-                print(self.slave_connections)
-                for slave in self.slave_addresses:
-                    # connect to the slave
-                    slave = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                    slave.connect((slave[0], slave[1]))
+                if(role == "master"):
+                    print("replicating to slave")
+                    for slave in self.slave_addresses:
+                        # connect to the slave
+                        slave_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                        slave_socket.connect((slave[0], slave[1]))
 
-                    if command == "SET":
-                        print("replicating SET command")
-                        slave.sendall(data)
-                        print("sent to slave")
-                    slave.close()
+                        if command == "SET":
+                            print("replicating SET command")
+                            slave_socket.sendall(data)
+                            print("sent to slave")
             else:
                 client_socket.sendall(b"-ERR unknown command\r\n")
 
