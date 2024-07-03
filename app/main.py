@@ -43,7 +43,12 @@ class RedisServer:
         # Wait for REPLCONF capa response
         replconf_capa_response = self.master_socket.recv(1024)
         print(f"REPLCONF capa response: {replconf_capa_response}")  # For debugging
-
+        
+        # Send PSYNC ? -1
+        psync_cmd = b"*3\r\n$5\r\nPSYNC\r\n$1\r\n?\r\n$2\r\n-1\r\n"
+        self.master_socket.sendall(psync_cmd)
+        # For this stage, we're not handling the response to PSYNC
+        
 
     def _generate_random_id(self, length=40):
         # Generates a random string of upper and lowercase letters and digits.
@@ -107,7 +112,8 @@ class RedisServer:
             "DEL": self._handle_del,
             "ECHO": lambda args: b"$" + bytes(str(len(args[0])), 'utf-8') + b"\r\n" + args[0] + b"\r\n",
             "PING": lambda args: b"+PONG\r\n",
-            "INFO": self._handle_info,  # Add the INFO command handler here
+            "INFO": self._handle_info,
+            "REPLCONF": lambda args: b"+OK\r\n"  # Add the REPLCONF command handler here
         }
 
     def _handle_client(self, client_socket):
