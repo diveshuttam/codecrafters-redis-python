@@ -2,15 +2,28 @@
 import socket
 import threading
 
+global redis_dict
+redis_dict = {}
+
 def handle_set(args):
     # Handle SET command
+    # Example: SET key value
+    # args[0] is the key, args[1] is the value
+    key = args[0]
+    value = args[2]
+    redis_dict[key] = value
     print("SET command with args:", args)
     return b"+OK\r\n"
 
 def handle_get(args):
     # Handle GET command
     print("GET command with args:", args)
-    return b"$-1\r\n"  # Example: return nil for any GET for simplicity
+    key = args[0]
+    value = redis_dict.get(key)
+    if value:
+        return b"$" + bytes(str(len(value)), 'utf-8') + b"\r\n" + value + b"\r\n"
+    else:
+        return b"$-1\r\n"  # Example: pretend the key does not exist
 
 def handle_del(args):
     # Handle DEL command
