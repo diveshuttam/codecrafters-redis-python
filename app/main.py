@@ -206,7 +206,7 @@ class RedisServer:
                 break
             command, args = self._parse_data(data)
             handler = dispatcher.get(command)
-            print("Command: ", command)
+            print("Command: ", command, "role: ", self.role)
             if handler:
                 ## if handler has an argument named "client_socket", pass it
                 if "client_socket" in handler.__code__.co_varnames:
