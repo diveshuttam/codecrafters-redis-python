@@ -115,13 +115,7 @@ class RedisServer:
         # Send an error response for unsupported configuration parameters
         return b"-ERR Unsupported CONFIG parameter\r\n"
 
-    def _handle_psync(self, args, client_socket):
-        # Construct the FULLRESYNC response
-        fullresync_response = f"+FULLRESYNC {self.replication_id} {self.replication_offset}\r\n"
-        response = bytes(fullresync_response, 'utf-8')
-        # Send the empty RDB file to the replica
-        response += self._send_empty_rdb()
-
+    def _connect_to_slaves(self):
         # Get a slave connection ready set the save connected setting as true
         slave_address = self.slave_addresses.pop(0)
         slave_host, slave_port = slave_address
@@ -130,6 +124,20 @@ class RedisServer:
         slave_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         slave_socket.connect((slave_host, slave_port))
         self.slave_connections.append(slave_socket)
+
+
+    def _handle_psync(self, args, client_socket):
+        # Construct the FULLRESYNC response
+        fullresync_response = f"+FULLRESYNC {self.replication_id} {self.replication_offset}\r\n"
+        response = bytes(fullresync_response, 'utf-8')
+        # Send the empty RDB file to the replica
+        response += self._send_empty_rdb()
+
+        # Connect to the slave
+        # self._connect_to_slaves()
+
+        # for now just putting the same socket (client_socket) in the list
+        self.slave_connections.append(client_socket)
 
         return response
 
