@@ -176,9 +176,11 @@ class RedisServer:
             handler = dispatcher.get(command)
             print("Command: ", command)
             if handler:
-                if command == "PSYNC" or command == "REPLCONF":
+                ## if handler has an argument named "client_socket", pass it
+                if "client_socket" in handler.__code__.co_varnames:
                     response = handler(args, client_socket)
-                response = handler(args)
+                else:    
+                    response = handler(args)
                 client_socket.sendall(response)
                 # replicate appropriate commands to the slave
                 for slave in self.slave_connections:
