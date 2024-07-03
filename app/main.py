@@ -22,9 +22,11 @@ def parse_data(data):
     if data.startswith(b'*'):
         # Array type, split lines and parse each
         lines = data.split(b'\r\n')
-        command = lines[1][:].decode().upper()  # Assuming the command is the first bulk string
-        args = [line[1:].decode() for line in lines[2:-2]]  # Decode each argument
-        return command, args
+        # print(lines)
+        command = lines[2].upper()  # Assuming the command is the first bulk string
+        # print(command)
+        args = lines[4:-1]  # Assuming the rest are arguments
+        return command.decode(), args
     elif data.startswith(b'+'):
         # Simple string
         return data[1:].decode().strip(), []
@@ -38,7 +40,7 @@ def command_dispatcher():
         "SET": handle_set,
         "GET": handle_get,
         "DEL": handle_del,
-        "ECHO" : lambda args: b"$" + str(len(args[0])).encode() + b"\r\n" + args[0].encode() + b"\r\n",
+        "ECHO" : lambda args: b"$" + bytes(str(len(args[0])), 'utf-8') + b"\r\n" + args[0] + b"\r\n",
         "PING": lambda args: b"+PONG\r\n",
     }
 
