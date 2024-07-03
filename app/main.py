@@ -61,7 +61,6 @@ class RedisServer:
         # start processing the commands from master in a separate thread
         master_thread = threading.Thread(target=self._handle_master, args=(self.master_socket,))
         master_thread.start()
-        master_thread.join()
         
     def _handle_master(self, master_socket):
         while True:
