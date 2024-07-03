@@ -99,15 +99,15 @@ def handle_client(client_socket):
         else:
             client_socket.sendall(b"-ERR unknown command\r\n")
 
-def main():
+def main(port=6379):
     # You can use print statements as follows for debugging, they'll be visible when running tests.
     print("Logs from your program will appear here!")
 
     # Uncomment this to pass the first stage
     #
-    server_socket = socket.create_server(("localhost", 6379), reuse_port=True)
+    server_socket = socket.create_server(("localhost", port), reuse_port=True)
     
-    server_socket.listen(1)
+    server_socket.listen(10)
     while True:
         client_socket, addr = server_socket.accept()
         # read packets from client_socket and send responses
@@ -119,4 +119,9 @@ def main():
         # thread.join() 
 
 if __name__ == "__main__":
-    main()
+    # parse arguments
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--port", type=int, default=6379)
+    args = parser.parse_args()
+    main(args.port)
