@@ -1,127 +1,89 @@
-# Uncomment this to pass the first stage
 import socket
 import threading
 import time
+import argparse
 
-global redis_dict
-redis_dict = {}
+class RedisServer:
+    def __init__(self, port=6379):
+        self.port = port
+        self.redis_dict = {}
 
-def handle_set(args):
-    # Handle SET command
-    # Example: SET key value
-    # args[0] is the key, args[1] is the value
-    print(len(args))
-    if len(args) == 2:
-        key = args[0]
-        value = args[1]
-        redis_dict[key] = (value, None)
-        print("SET command with args:", args)
-        return b"+OK\r\n"
-    
-    # handle expiry
-    elif len(args) == 4:
-        print('here on')
-        if args[2].decode().upper() == "PX":
-            print("here")
+    def _handle_set(self, args):
+        if len(args) == 2:
+            key = args[0]
+            value = args[1]
+            self.redis_dict[key] = (value, None)
+            return b"+OK\r\n"
+        elif len(args) == 4 and args[2].decode().upper() == "PX":
             key = args[0]
             value = args[1]
             expiry = args[3]
-            # assume expiry is in milliseconds
-
             expiry_time = time.time()*1000 + int(expiry)
-            redis_dict[key] = (value, expiry_time)
-            print("SET command with args:", args)
+            self.redis_dict[key] = (value, expiry_time)
             return b"+OK\r\n"
-    
-    return b"-ERR wrong number of arguments for 'set' command\r\n"
-    
-def handle_get(args):
-    # Handle GET command
-    print("GET command with args:", args)
-    key = args[0]
-    value = redis_dict.get(key)
-    # discard expired keys
-    if value:
-        if value[1] and value[1] < time.time()*1000:
-            del redis_dict[key]
-            return b"$-1\r\n"
-        return b"$" + bytes(str(len(value[0])), 'utf-8') + b"\r\n" + value[0] + b"\r\n"
-    else:
-        return b"$-1\r\n"  # Example: pretend the key does not exist
+        return b"-ERR wrong number of arguments for 'set' command\r\n"
 
-def handle_del(args):
-    # Handle DEL command
-    print("DEL command with args:", args)
-    return b":0\r\n"  # Example: pretend the key does not exist
-
-def parse_data(data):
-    """Parse a simple RESP string."""
-    if data.startswith(b'*'):
-        # Array type, split lines and parse each
-        lines = data.split(b'\r\n')
-        # print(lines)
-        command = lines[2].upper()  # Assuming the command is the first bulk string
-        # print(command)
-        args = lines[4:-1]  # Assuming the rest are arguments (excluding the last empty line)
-        # for cases like [b'foo', b'$3', b'bar'] remove the b'$3' etc
-        args = [arg for i, arg in enumerate(args) if i % 2 == 0]
-        return command.decode(), args
-    elif data.startswith(b'+'):
-        # Simple string
-        return data[1:].decode().strip(), []
-    # Add more cases here for other RESP types like Errors (-), Integers (:), Bulk Strings ($)
-    else:
-        raise ValueError("Unsupported RESP type")
-
-def command_dispatcher():
-    # Maps command names to their handler functions
-    return {
-        "SET": handle_set,
-        "GET": handle_get,
-        "DEL": handle_del,
-        "ECHO" : lambda args: b"$" + bytes(str(len(args[0])), 'utf-8') + b"\r\n" + args[0] + b"\r\n",
-        "PING": lambda args: b"+PONG\r\n",
-    }
-
-def handle_client(client_socket):
-    dispatcher = command_dispatcher()
-    while True:
-        data = client_socket.recv(1024)
-        print("Received", data)
-        if not data:
-            break
-        command, args = parse_data(data)
-        print(command, args)        
-        handler = dispatcher.get(command)
-        if handler:
-            response = handler(args)
-            client_socket.sendall(response)
+    def _handle_get(self, args):
+        key = args[0]
+        value = self.redis_dict.get(key)
+        if value:
+            if value[1] and value[1] < time.time()*1000:
+                del self.redis_dict[key]
+                return b"$-1\r\n"
+            return b"$" + bytes(str(len(value[0])), 'utf-8') + b"\r\n" + value[0] + b"\r\n"
         else:
-            client_socket.sendall(b"-ERR unknown command\r\n")
+            return b"$-1\r\n"
 
-def main(port=6379):
-    # You can use print statements as follows for debugging, they'll be visible when running tests.
-    print("Logs from your program will appear here!")
+    def _handle_del(self, args):
+        return b":0\r\n"
 
-    # Uncomment this to pass the first stage
-    #
-    server_socket = socket.create_server(("localhost", port), reuse_port=True)
-    
-    server_socket.listen(10)
-    while True:
-        client_socket, addr = server_socket.accept()
-        # read packets from client_socket and send responses
-        print("Connection from", addr)
+    def _parse_data(self, data):
+        if data.startswith(b'*'):
+            lines = data.split(b'\r\n')
+            command = lines[2].upper()
+            args = lines[4:-1]
+            args = [arg for i, arg in enumerate(args) if i % 2 == 0]
+            return command.decode(), args
+        elif data.startswith(b'+'):
+            return data[1:].decode().strip(), []
+        else:
+            raise ValueError("Unsupported RESP type")
 
-        # handle client in a separate thread
-        thread = threading.Thread(target=handle_client, args=(client_socket,))
-        thread.start()
-        # thread.join() 
+    def _command_dispatcher(self):
+        return {
+            "SET": self._handle_set,
+            "GET": self._handle_get,
+            "DEL": self._handle_del,
+            "ECHO": lambda args: b"$" + bytes(str(len(args[0])), 'utf-8') + b"\r\n" + args[0] + b"\r\n",
+            "PING": lambda args: b"+PONG\r\n",
+        }
+
+    def _handle_client(self, client_socket):
+        dispatcher = self._command_dispatcher()
+        while True:
+            data = client_socket.recv(1024)
+            if not data:
+                break
+            command, args = self._parse_data(data)
+            handler = dispatcher.get(command)
+            if handler:
+                response = handler(args)
+                client_socket.sendall(response)
+            else:
+                client_socket.sendall(b"-ERR unknown command\r\n")
+
+    def start(self):
+        server_socket = socket.create_server(("localhost", self.port), reuse_port=True)
+        server_socket.listen(10)
+        while True:
+            client_socket, addr = server_socket.accept()
+            thread = threading.Thread(target=self._handle_client, args=(client_socket,))
+            thread.start()
 
 if __name__ == "__main__":
-    # parse arguments
-    import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("--port", type=int, default=6379)
     args = parser.parse_args()
-    main(args.port)
+
+    server = RedisServer(args.port)
+    server.start()
