@@ -2,13 +2,24 @@ import socket
 import threading
 import time
 import argparse
+import random
+import string
+
+
 
 class RedisServer:
     def __init__(self, port=6379, role="master"):
         self.port = port
         self.role = role  # Store the role of the server
+        self.master_replid = self._generate_random_id()  # Generate a random master replication ID
+        self.master_repl_offset = 0  # Replication offset initialized to 0
         self.redis_dict = {}
 
+    def _generate_random_id(length=40):
+        # Generates a random string of upper and lowercase letters and digits.
+        characters = string.ascii_letters + string.digits
+        random_id = ''.join(random.choice(characters) for _ in range(length))
+        return random_id
     def _handle_set(self, args):
         if len(args) == 2:
             key = args[0]
@@ -39,13 +50,13 @@ class RedisServer:
         return b":0\r\n"
     
     def _handle_info(self, args):
-        # Extend the INFO command to support returning the role based on the server's role
+        # Extend the INFO command to include master_replid and master_repl_offset
         if args and args[0].decode().lower() == "replication":
-            info_response = f"role:{self.role}\r\n"
+            info_response = f"role:{self.role}\r\nmaster_replid:{self.master_replid}\r\nmaster_repl_offset:{self.master_repl_offset}\r\n"
             return b"$" + bytes(str(len(info_response)), 'utf-8') + b"\r\n" + bytes(info_response, 'utf-8') + b"\r\n"
         else:
             return b"$0\r\n"
-        
+
     def _parse_data(self, data):
         if data.startswith(b'*'):
             lines = data.split(b'\r\n')
