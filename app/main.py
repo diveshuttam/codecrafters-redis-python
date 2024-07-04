@@ -54,19 +54,19 @@ class RedisServer:
         print(f"Redis version: {redis_version}")
         
         # Get the Redis bits
-        redis_bits = rdb_content[12:22].decode()
+        redis_bits = rdb_content[12:22]
         print(f"Redis bits: {redis_bits}")
         
         # Get the ctime
-        ctime = rdb_content[22:30].decode()
+        ctime = rdb_content[22:30]
         print(f"ctime: {ctime}")
         
         # Get the used memory
-        used_memory = rdb_content[30:38].decode()
+        used_memory = rdb_content[30:38]
         print(f"used memory: {used_memory}")
         
         # Get the AOF base
-        aof_base = rdb_content[38:46].decode()
+        aof_base = rdb_content[38:46]
         print(f"AOF base: {aof_base}")
         
         # Get the data section
