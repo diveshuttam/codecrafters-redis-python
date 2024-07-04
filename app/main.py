@@ -298,6 +298,7 @@ class RedisServer:
                             continue
                         response = self.slave_connections[slave].recv(1024)
                         print("response from slave", response)
+                        
                         if response:
                             doneslaves = doneslaves.union({slave})
                             self.count += 1
