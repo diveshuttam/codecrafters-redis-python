@@ -102,6 +102,39 @@ class RedisServer:
             
             # Store the key, value, and expiry in the dictionary
             self.redis_dict[key] = (value, expiry)
+    
+    def _parse_key(self, data):
+        # Get the key length
+        key_length = int(data[0])
+        data = data[1:]
+        
+        # Get the key
+        key = data[:key_length]
+        data = data[key_length:]
+        
+        return key, data
+    
+    def _parse_expiry(self, data):
+        # Get the expiry length
+        expiry_length = int(data[0])
+        data = data[1:]
+        
+        # Get the expiry
+        expiry = data[:expiry_length]
+        data = data[expiry_length:]
+        
+        return expiry, data
+    
+    def _parse_value(self, data):
+        # Get the value length
+        value_length = int(data[0])
+        data = data[1:]
+        
+        # Get the value
+        value = data[:value_length]
+        data = data[value_length:]
+        
+        return value, data
          
     def _connect_to_master(self):
         self.master_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
