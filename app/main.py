@@ -186,6 +186,7 @@ class RedisServer:
             response = f"*3\r\n$8\r\nREPLCONF\r\n$3\r\nACK\r\n${len(str(bytes_read))}\r\n{bytes_read}\r\n"
         
         # Send an error response for unsupported configuration parameters
+        print("Unsupported CONFIG parameter", config_param, config_value)
         return b"-ERR Unsupported CONFIG parameter\r\n"
 
     def _connect_to_slaves(self):
