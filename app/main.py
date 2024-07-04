@@ -104,6 +104,7 @@ class RedisServer:
                     master_socket.sendall(response)
                 
             else:
+                print("unknown command, data", data)
                 master_socket.sendall(b"-ERR unknown command\r\n")
 
 
