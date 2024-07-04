@@ -271,7 +271,8 @@ class RedisServer:
         ctime = time.time()*1000
         exptime = ctime + tms
 
-        
+        # testing : for now sending to all slaves
+        num = len(self.slave_connections) 
         if(self.role == "master"):
             for slave in range(min(num, len(self.slave_connections))):
                 # send "REPLCONF GETACK *"
