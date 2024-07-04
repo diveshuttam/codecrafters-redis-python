@@ -272,7 +272,7 @@ class RedisServer:
         tms = int(args[1].decode())
 
         ctime = time.time()*1000
-        exptime = ctime + tms + 10000
+        exptime = ctime + tms
 
         # testing : for now sending to all slaves
         num = len(self.slave_connections) 
