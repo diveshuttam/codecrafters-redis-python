@@ -297,6 +297,7 @@ class RedisServer:
                     try:
                         if slave in doneslaves:
                             continue
+                        print("waiting for slave", slave, self.slave_connections[slave].getpeername()
                         response = self.slave_connections[slave].recv(1024)
                         print("response from slave", response)
                         
