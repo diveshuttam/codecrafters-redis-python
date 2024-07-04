@@ -208,6 +208,7 @@ class RedisServer:
         return rdb_file_message
 
     def _parse_data(self, data):
+        print("inside parse data", data)
         if data.startswith(b'*'):
             lines = data.split(b'\r\n')
             total_terms = int(lines[0][1:])
