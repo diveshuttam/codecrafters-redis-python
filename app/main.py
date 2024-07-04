@@ -290,7 +290,7 @@ class RedisServer:
             
             # wait for the response from all the slaves
             doneslaves = set()
-            while count < num:
+            while (time.time()*1000) < exptime and count < num:
                 for slave in range(min(num, len(self.slave_connections))):
                     # self.slave_connections[slave].setblocking(1)
                     try:
@@ -298,7 +298,7 @@ class RedisServer:
                             continue
                         response = self.slave_connections[slave].recv(1024)
                         print("response from slave", response)
-
+                        
                         if response:
                             doneslaves = doneslaves.union({slave})
                             self.count += 1
