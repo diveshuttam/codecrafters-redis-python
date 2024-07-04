@@ -86,7 +86,12 @@ class RedisServer:
             handler = self._command_dispatcher().get(command)
             if handler:
                 response = handler(args)
-                # master_socket.sendall(response)
+                
+                # if response is a tuple, it means we need to send the response to the master
+                if isinstance(response, tuple):
+                    response, client_socket = response
+                    master_socket.sendall(response)
+                
             else:
                 master_socket.sendall(b"-ERR unknown command\r\n")
 
@@ -152,7 +157,8 @@ class RedisServer:
 
         # handle GETACK, reply with REPLCONF ACK 0 (encoded correctly)
         elif config_param == "getack":
-            return b"*3\r\n$8\r\nREPLCONF\r\n$3\r\nACK\r\n$1\r\n0\r\n"
+            return b"*3\r\n$8\r\nREPLCONF\r\n$3\r\nACK\r\n$1\r\n0\r\n", None
+        
         # Send an error response for unsupported configuration parameters
         return b"-ERR Unsupported CONFIG parameter\r\n"
 
