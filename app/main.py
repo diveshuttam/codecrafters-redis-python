@@ -5,20 +5,6 @@ import argparse
 import random
 import string
 import base64
-import inspect
-
-def custom_print(*args, **kwargs):
-    # Get the current stack frame
-    frame = inspect.currentframe()
-    # Go back to the frame of the caller
-    caller_frame = frame.f_back
-    # Extract information
-    info = inspect.getframeinfo(caller_frame)
-    # Extracting function name and line number
-    function_name = info.function
-    line_number = info.lineno
-    # Original print functionality with added details
-    print(f"[{function_name}:{line_number}]", *args, **kwargs)
 
 
 class RedisServer:
@@ -76,13 +62,18 @@ class RedisServer:
         master_thread.start()
         
     def _handle_master(self, master_socket):
+        rest = b""
         while True:
-            print("in master thread")
-            data = master_socket.recv(1024)
+            if rest != b"":
+                print("rest: ", rest)
+                data = rest
+                rest = b""
+            else:
+                data = master_socket.recv(1024)
             print("master thread data", data)
             if not data:
                 break
-            command, args = self._parse_data(data)
+            command, args, rest = self._parse_data(data)
             print("Command for slave: ", command)
             handler = self._command_dispatcher().get(command)
             if handler:
