@@ -310,7 +310,8 @@ class RedisServer:
                         pass
 
                     sleep = (exptime-time.time()*1000)/1000.0/num/2.0
-                    time.sleep(sleep)
+                    if(sleep > 0):
+                        time.sleep(sleep)
 
                
             # return count as an integer
