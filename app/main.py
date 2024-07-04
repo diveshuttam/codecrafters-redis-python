@@ -201,6 +201,13 @@ class RedisServer:
 
         return response
 
+    def _handle_fullresync(self, args):
+        # Parse the replication ID and offset from the arguments
+        self.replication_id = args[0].decode()
+        self.replication_offset = int(args[1].decode())
+        # Send the empty RDB file to the replica
+        return self._send_empty_rdb()
+
     def _send_empty_rdb(self):
         # Base64 representation of the empty RDB file
         empty_rdb_base64 = "UkVESVMwMDEx+glyZWRpcy12ZXIFNy4yLjD6CnJlZGlzLWJpdHPAQPoFY3RpbWXCbQi8ZfoIdXNlZC1tZW3CsMQQAPoIYW9mLWJhc2XAAP/wbjv+wP9aog=="
@@ -243,6 +250,7 @@ class RedisServer:
             "INFO": self._handle_info,
             "REPLCONF": self._handle_replconf,
             "PSYNC": self._handle_psync,
+            "FULLRESYNC": self._handle_fullresync,
         }
 
     def _handle_client(self, client_socket):
