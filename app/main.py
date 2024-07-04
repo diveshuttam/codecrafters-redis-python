@@ -88,8 +88,10 @@ class RedisServer:
                 response = handler(args)
                 
                 # if response is a tuple, it means we need to send the response to the master
+                print("obj", response)
                 if isinstance(response, tuple):
-                    response, client_socket = response
+                    print("yes here")
+                    response, _ = response
                     master_socket.sendall(response)
                 
             else:
