@@ -71,10 +71,13 @@ class RedisServer:
             else:
                 data = master_socket.recv(1024)
 
-            # ignore the rdb file (starts with '88\r\nREDIS0011' )
-            if data.startswith(b'88\r\nREDIS0011'):
-                print("RDB file received")
+            rdbdata = b'$88\r\nREDIS0011\xfa\tredis-ver\x057.2.0\xfa\nredis-bits\xc0@\xfa\x05ctime\xc2m\x08\xbce\xfa\x08used-mem\xc2\xb0\xc4\x10\x00\xfa\x08aof-base\xc0\x00\xff\xf0n;\xfe\xc0\xffZ\xa2'
+
+            # ignore rdb data for now data can have more than one command
+            if data == rdbdata:
+                print("RDB data")
                 continue
+
             print("master thread data", data)
             if not data:
                 break
