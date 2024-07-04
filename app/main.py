@@ -216,6 +216,8 @@ class RedisServer:
         if data.startswith(b'*'):
             lines = data.split(b'\r\n')
             total_terms = int(lines[0][1:])
+            print("lines", lines)
+            print("total terms", total_terms)
             command = lines[2].upper()
             args = lines[4: 4 + total_terms * 2: 2]
             rest = lines[4 + total_terms * 2:]
