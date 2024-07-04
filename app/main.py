@@ -334,8 +334,8 @@ class RedisServer:
                 # replicate appropriate commands to the slave
                 if(role == "master"):
                     for slave in self.slave_connections:
-                        print("replicating to slave", slave.getpeername())
                         if(command == "SET"):
+                            print("replicating to slave", slave.getpeername())
                             slave.sendall(data)
             else:
                 client_socket.sendall(b"-ERR unknown command\r\n")
