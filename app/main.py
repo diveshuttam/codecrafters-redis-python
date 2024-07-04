@@ -328,8 +328,8 @@ class RedisServer:
                     
                 # replicate appropriate commands to the slave
                 if(role == "master"):
-                    print("replicating to slave")
                     for slave in self.slave_connections:
+                        print("replicating to slave", slave.getpeername())
                         if(command == "SET"):
                             slave.sendall(data)
             else:
