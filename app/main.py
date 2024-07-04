@@ -149,6 +149,10 @@ class RedisServer:
             return b"+OK\r\n"
         elif config_param == "capa":
             return b"+OK\r\n"
+
+        # handle GETACK, reply with REPLCONF ACK 0 (encoded correctly)
+        elif config_param == "getack":
+            return b"*3\r\n$8\r\nREPLCONF\r\n$3\r\nACK\r\n$1\r\n0\r\n"
         # Send an error response for unsupported configuration parameters
         return b"-ERR Unsupported CONFIG parameter\r\n"
 
