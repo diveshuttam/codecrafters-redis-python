@@ -291,6 +291,7 @@ class RedisServer:
             # wait for the response from all the slaves
             while (time.time()*1000) < exptime and count < num:
                 for slave in range(min(num, len(self.slave_connections))):
+                    self.slave_connections[slave].setblocking(1)
                     try:
                         response = self.slave_connections[slave].recv(1024)
                         print("response from slave", response)
