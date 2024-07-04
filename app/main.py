@@ -307,7 +307,8 @@ class RedisServer:
                         if response:
                             doneslaves = doneslaves.union({slave})
                             self.count += 1
-                    except:
+                    except BaseException as e:
+                        print("exception", e)
                         pass
 
                
