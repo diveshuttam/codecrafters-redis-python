@@ -273,17 +273,25 @@ class RedisServer:
 
         # testing : for now sending to all slaves
         num = len(self.slave_connections) 
+        count = 0
         if(self.role == "master"):
             for slave in range(min(num, len(self.slave_connections))):
                 # send "REPLCONF GETACK *"
                 self.slave_connections[slave].sendall(b"*3\r\n$8\r\nREPLCONF\r\n$6\r\nGETACK\r\n$1\r\n*\r\n")
                 # check the response
-                response = self.slave_connections[slave].recv(1024)
+                try:
+                    # only recieve till timeout
+                    self.slave_connections[slave].settimeout(tms)
+                    response = self.slave_connections[slave].recv(1024)
+                except socket.timeout:
+                    print("timeout")
+                    continue
+                count+=1
         
 
         
         
-        return b":" + bytes(str(len(self.slave_connections)), 'utf-8') + b"\r\n"
+        return b":" + bytes(str(len(self.count)), 'utf-8') + b"\r\n"
 
     def _command_dispatcher(self):
         return {
