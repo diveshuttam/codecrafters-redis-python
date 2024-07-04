@@ -168,6 +168,8 @@ class RedisServer:
         print("replconf args", args)
         config_param = args[0].decode().lower()
         config_value = args[1].decode().lower()
+        print("config_param", config_param)
+        print("config_value", config_value)
         # Check if the configuration parameter is "listening-port"
         if config_param == "listening-port":
             # Update the port number to the new value
