@@ -96,7 +96,7 @@ class RedisServer:
 
 
             command, args, rest = self._parse_data(data)
-            self.bytes_read += (len(data) - len(rest))
+            
             if(command is None):
                 continue
             print("Command for slave: ", command)
@@ -113,6 +113,8 @@ class RedisServer:
                     print("yes here")
                     response, _ = response
                     master_socket.sendall(response)
+                if(self.handshake_success == True):
+                    self.bytes_read += (len(data) - len(rest))
                 
             else:
                 print("unknown command, data", data)
