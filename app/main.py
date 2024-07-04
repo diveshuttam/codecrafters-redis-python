@@ -22,6 +22,7 @@ class RedisServer:
         self.redis_dict = {}
         self.bytes_read = 0
         self.handshake_success = False
+        self.pending_count = 0
         if role == 'slave':
             self._connect_to_master()
          
@@ -283,6 +284,9 @@ class RedisServer:
         self.count = 0
         print("in wait, num, slaves", num, len(self.slave_connections))
         if(self.role == "master"):
+            if(self.pending_count == 0):
+                return b":" + bytes(str(len(self.slave_connections)), 'utf-8') + b"\r\n"
+            
             for slave in range(min(num, len(self.slave_connections))):
                 # send "REPLCONF GETACK *"
                 # non blocking
@@ -303,6 +307,7 @@ class RedisServer:
                         
                         if response:
                             doneslaves = doneslaves.union({slave})
+                            self.pending_count -= 1
                             self.count += 1
                     except BaseException as e:
                         print("exception", e)
@@ -365,6 +370,7 @@ class RedisServer:
                     for slave in self.slave_connections:
                         if(command == "SET"):
                             print("replicating to slave", slave.getpeername())
+                            self.pending_count += 1
                             slave.sendall(data)
             else:
                 client_socket.sendall(b"-ERR unknown command\r\n")
