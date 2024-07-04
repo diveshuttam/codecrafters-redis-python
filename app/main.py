@@ -50,15 +50,15 @@ class RedisServer:
         
         # Parse the RDB file
         # Get the Redis version
-        redis_version = rdb_content[5:12]
+        redis_version = rdb_content[5:12].decode('ascii')
         print(f"Redis version: {redis_version}")
         
         # Get the Redis bits
-        redis_bits = rdb_content[12:22]
+        redis_bits = rdb_content[12:22].decode('ascii')
         print(f"Redis bits: {redis_bits}")
         
         # Get the ctime
-        ctime = rdb_content[22:30]
+        ctime = rdb_content[22:30].decode('ascii')
         print(f"ctime: {ctime}")
         
         # Get the used memory
@@ -135,6 +135,7 @@ class RedisServer:
         data = data[value_length:]
         
         return value, data
+
          
     def _connect_to_master(self):
         self.master_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
