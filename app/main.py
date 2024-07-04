@@ -24,8 +24,84 @@ class RedisServer:
         self.handshake_success = False
         self.pending_count = 0
         self.config = config
+
+        # read the rdb file
+        self._rdb_parsing()
+
         if role == 'slave':
             self._connect_to_master()
+    
+    def _rdb_parsing(self):
+        # Read the RDB file
+        with open(f"{self.config['dir']}/{self.config['dbfilename']}", "rb") as file:
+            rdb_content = file.read()
+        
+        # Parse the RDB file
+        self._parse_rdb(rdb_content)
+    
+    def _parse_rdb(self, rdb_content):
+        # Check if the RDB file is empty
+        if rdb_content == b"":
+            return
+        
+        # Check if the RDB file is a valid Redis RDB file
+        if rdb_content[:5] != b"REDIS":
+            raise ValueError("Invalid RDB file")
+        
+        # Parse the RDB file
+        # Get the Redis version
+        redis_version = rdb_content[5:12].decode()
+        print(f"Redis version: {redis_version}")
+        
+        # Get the Redis bits
+        redis_bits = rdb_content[12:22].decode()
+        print(f"Redis bits: {redis_bits}")
+        
+        # Get the ctime
+        ctime = rdb_content[22:30].decode()
+        print(f"ctime: {ctime}")
+        
+        # Get the used memory
+        used_memory = rdb_content[30:38].decode()
+        print(f"used memory: {used_memory}")
+        
+        # Get the AOF base
+        aof_base = rdb_content[38:46].decode()
+        print(f"AOF base: {aof_base}")
+        
+        # Get the data section
+        data = rdb_content[46:]
+        print(f"Data section: {data}")
+        
+        # Parse the data section
+        self._parse_data_section(data)
+    
+    def _parse_data_section(self, data):
+        # Initialize the variables
+        key = None
+        value = None
+        expiry = None
+        
+        # Parse the data section
+        while data:
+            # Get the data type
+            data_type = data[0]
+            data = data[1:]
+            
+            # Parse the key
+            key, data = self._parse_key(data)
+            print(f"Key: {key}")
+            
+            # Parse the expiry
+            expiry, data = self._parse_expiry(data)
+            print(f"Expiry: {expiry}")
+            
+            # Parse the value
+            value, data = self._parse_value(data)
+            print(f"Value: {value}")
+            
+            # Store the key, value, and expiry in the dictionary
+            self.redis_dict[key] = (value, expiry)
          
     def _connect_to_master(self):
         self.master_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -342,6 +418,18 @@ class RedisServer:
 
         return b"-ERR unsupported CONFIG parameter\r\n"
     
+    def _handle_keys(self, args):
+        # return all the keys in the redis_dict in form of an array
+        # redis-cli KEYS "*"
+        # 1) "baz"
+        # 2) "foo"
+        
+        response = "*"+str(len(self.redis_dict)) + "\r\n"
+        for key in self.redis_dict.keys():
+            response += f"${len(key)}\r\n{key}\r\n"
+        return bytes(response, 'utf-8')
+
+
     def _command_dispatcher(self):
         return {
             "SET": self._handle_set,
@@ -354,7 +442,8 @@ class RedisServer:
             "PSYNC": self._handle_psync,
             "FULLRESYNC": self._handle_fullresync,
             "WAIT": self._handle_wait,
-            "CONFIG": self._handle_config
+            "CONFIG": self._handle_config,
+            "KEYS": self._handle_keys
         }
 
     def _handle_client(self, client_socket):
