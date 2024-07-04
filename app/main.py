@@ -191,6 +191,7 @@ class RedisServer:
             return bytes(response, 'utf-8'), None
         
         elif config_param == "ack":
+            self.count += 1
             return b"+OK\r\n"
         
         # Send an error response for unsupported configuration parameters
@@ -278,6 +279,7 @@ class RedisServer:
         num = len(self.slave_connections) 
         count = 0
         # send the getack command to all the slaves
+        self.count = 0
         if(self.role == "master"):
             for slave in range(min(num, len(self.slave_connections))):
                 # send "REPLCONF GETACK *"
@@ -299,7 +301,7 @@ class RedisServer:
                
             # return count as an integer
             # :7\r\n
-            return b":" + bytes(str(count), 'utf-8') + b"\r\n"
+            return b":" + bytes(str(self.count), 'utf-8') + b"\r\n"
 
     def _command_dispatcher(self):
         return {
