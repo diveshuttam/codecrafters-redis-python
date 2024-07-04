@@ -89,7 +89,10 @@ class RedisServer:
             print("Command for slave: ", command)
             handler = self._command_dispatcher().get(command)
             if handler:
-                response = handler(args)
+                if "client_socket" in handler.__code__.co_varnames:
+                    response = handler(args, master_socket)
+                else:
+                    response = handler(args)
                 
                 # if response is a tuple, it means we need to send the response to the master
                 print("obj", response)
