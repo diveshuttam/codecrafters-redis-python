@@ -289,13 +289,17 @@ class RedisServer:
                 self.slave_connections[slave].sendall(b"*3\r\n$8\r\nREPLCONF\r\n$6\r\nGETACK\r\n$1\r\n*\r\n")
             
             # wait for the response from all the slaves
+            doneslaves = set()
             while (time.time()*1000) < exptime and count < num:
                 for slave in range(min(num, len(self.slave_connections))):
-                    self.slave_connections[slave].setblocking(1)
+                    # self.slave_connections[slave].setblocking(1)
                     try:
+                        if slave in doneslaves:
+                            continue
                         response = self.slave_connections[slave].recv(1024)
                         print("response from slave", response)
                         if response:
+                            doneslaves = doneslaves.union({slave})
                             self.count += 1
                     except:
                         pass
