@@ -179,10 +179,13 @@ class RedisServer:
     def _parse_data(self, data):
         if data.startswith(b'*'):
             lines = data.split(b'\r\n')
+            total_terms = int(lines[0][1:])
             command = lines[2].upper()
-            args = lines[4:-1]
-            args = [arg for i, arg in enumerate(args) if i % 2 == 0]
-            return command.decode(), args
+            args = lines[4: 4 + total_terms * 2: 2]
+            rest = lines[4 + total_terms * 2 + 1:]
+
+            # join rest into a binary single string
+            return command.decode(), args, b"\r\n".join(rest) if len(rest)>0 else b""
         elif data.startswith(b'+'):
             return data[1:].decode().strip(), []
         else:
@@ -202,11 +205,18 @@ class RedisServer:
 
     def _handle_client(self, client_socket):
         dispatcher = self._command_dispatcher()
+        rest = b""
         while True:
-            data = client_socket.recv(1024)
+            if rest != b"":
+                print("rest: ", rest)
+                data = rest
+                rest = b""
+            else:
+                data = client_socket.recv(1024)
+
             if not data:
                 break
-            command, args = self._parse_data(data)
+            command, args, rest = self._parse_data(data)
             handler = dispatcher.get(command)
             print("Command: ", command, "role: ", self.role)
             if handler:
