@@ -274,7 +274,8 @@ class RedisServer:
             "REPLCONF": self._handle_replconf,
             "PSYNC": self._handle_psync,
             "FULLRESYNC": self._handle_fullresync,
-            "WAIT": lambda args: b":0\r\n",
+            # for wait return back the number of replicas (len slave_connections)
+            "WAIT": lambda args: b":" + bytes(str(len(self.slave_connections)), 'utf-8') + b"\r\n"
         }
 
     def _handle_client(self, client_socket):
