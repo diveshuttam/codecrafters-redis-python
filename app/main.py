@@ -8,7 +8,7 @@ import base64
 
 
 class RedisServer:
-    def __init__(self, port=6379, role="master", master_host=None, master_port=None):
+    def __init__(self, port=6379, role="master", master_host=None, master_port=None, config={}):
         self.port = port
         self.role = role
         self.master_replid = '8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb'
@@ -23,6 +23,7 @@ class RedisServer:
         self.bytes_read = 0
         self.handshake_success = False
         self.pending_count = 0
+        self.config = config
         if role == 'slave':
             self._connect_to_master()
          
@@ -323,7 +324,21 @@ class RedisServer:
             # :7\r\n
             print("wait response", self.count)
             return b":" + bytes(str(self.count), 'utf-8') + b"\r\n"
-
+        
+    def _handle_config(self, args):
+        print("config args", args)
+        if args[0].decode().lower() == "get":
+            # get the args[1] and return the value
+            config_param = args[1].decode().lower()
+            if config_param == "dir":
+                return b"$" + bytes(str(len(self.config["dir"])), 'utf-8') + b"\r\n" + bytes(self.config["dir"], 'utf-8') + b"\r\n"
+            elif config_param == "dbfilename":
+                return b"$" + bytes(str(len(self.config["dbfilename"])), 'utf-8') + b"\r\n" + bytes(self.config["dbfilename"], 'utf-8') + b"\r\n"
+            else:
+                return b"-ERR unsupported CONFIG parameter\r\n"
+            
+        return b"-ERR unsupported CONFIG parameter\r\n"
+    
     def _command_dispatcher(self):
         return {
             "SET": self._handle_set,
@@ -335,7 +350,8 @@ class RedisServer:
             "REPLCONF": self._handle_replconf,
             "PSYNC": self._handle_psync,
             "FULLRESYNC": self._handle_fullresync,
-            "WAIT": self._handle_wait
+            "WAIT": self._handle_wait,
+            "CONFIG": self._handle_config
         }
 
     def _handle_client(self, client_socket):
@@ -387,13 +403,19 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--port", type=int, default=6379)
     parser.add_argument("--replicaof", help="Start as a replica of the specified master. Expects 'host port'.")
+    parser.add_argument("--dir", type=str, default="/tmp/redis-files")
+    parser.add_argument("--dbfilename", type=str, default="dump.rdb")
+    
     args = parser.parse_args()
+    config = args.__dict__
+    print('config', config)
+
     role = 'slave' if args.replicaof else 'master'  # Determine the role based on the --replicaof flag
         # Split the --replicaof argument into host and port
     if args.replicaof:
         master_host, master_port = args.replicaof.split()
     else:
         master_host, master_port = (None, None)
-    server = RedisServer(args.port, role, master_host, master_port)
+    server = RedisServer(args.port, role, master_host, master_port, config)
     print(f"Starting server on port {args.port} as {role}")
     server.start()
