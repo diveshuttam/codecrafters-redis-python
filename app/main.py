@@ -156,6 +156,7 @@ class RedisServer:
         
     def _handle_replconf(self, args, client_socket):
         # Parse the arguments to get the configuration parameter and its value
+        print("replconf args", args)
         config_param = args[0].decode().lower()
         config_value = args[1].decode().lower()
         # Check if the configuration parameter is "listening-port"
