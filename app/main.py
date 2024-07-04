@@ -191,7 +191,9 @@ class RedisServer:
             total_terms = int(lines[0][1:])
             command = lines[2].upper()
             args = lines[4: 4 + total_terms * 2: 2]
-            rest = lines[4 + total_terms * 2 + 1:]
+            rest = lines[4 + total_terms * 2:]
+            print("args: ", args)
+            print("rest: ", rest)
 
             # join rest into a binary single string
             return command.decode(), args, b"\r\n".join(rest) if len(rest)>0 else b""
