@@ -192,6 +192,7 @@ class RedisServer:
         
         elif config_param == "ack":
             self.count += 1
+            print("ack received increasing count", self.count)
             return b"+OK\r\n"
         
         # Send an error response for unsupported configuration parameters
