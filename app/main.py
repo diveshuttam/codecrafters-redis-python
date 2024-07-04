@@ -235,7 +235,8 @@ class RedisServer:
             # join rest into a binary single string
             return command.decode(), args, b"\r\n".join(rest) if len(rest)>0 else b""
         elif data.startswith(b'+'):
-            return data[1:].decode().strip(), []
+            # split data till \r\n
+            return data[1:].split(b'\r\n')[0], [], data[len(data.split(b'\r\n')[0]) + 2:]
         else:
             print("data: ", data)
             raise ValueError("Unsupported RESP type")
