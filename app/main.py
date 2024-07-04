@@ -189,6 +189,7 @@ class RedisServer:
         elif data.startswith(b'+'):
             return data[1:].decode().strip(), []
         else:
+            print("data: ", data)
             raise ValueError("Unsupported RESP type")
 
     def _command_dispatcher(self):
