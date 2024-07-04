@@ -51,11 +51,11 @@ class RedisServer:
         psync_cmd = b"*3\r\n$5\r\nPSYNC\r\n$1\r\n?\r\n$2\r\n-1\r\n"
         self.master_socket.sendall(psync_cmd)
         # Wait for PSYNC response
-        psync_response = self.master_socket.recv(157)
-        print(f"PSYNC response: {psync_response}")
+        # psync_response = self.master_socket.recv(1024)
+        # print(f"PSYNC response: {psync_response}")
         # Parse the PSYNC response
-        response_lines = psync_response.split(b'\r\n')
-        print("response", response_lines)
+        # response_lines = psync_response.split(b'\r\n')
+        # print("response", response_lines)
 
         # start processing the commands from master in a separate thread
         master_thread = threading.Thread(target=self._handle_master, args=(self.master_socket,))
