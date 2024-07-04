@@ -20,6 +20,8 @@ class RedisServer:
         self.slave_addresses = []  # List to store slave connections
         self.slave_connections = []  # List to store slave connections
         self.redis_dict = {}
+        self.bytes_read = 0
+        self.handshake_success = False
         if role == 'slave':
             self._connect_to_master()
          
@@ -78,16 +80,23 @@ class RedisServer:
             # if data starts with rdbdata, then skip it
             if data == rdbdata:
                 print("skipping rdbdata")
+                self.handshake_success = True
                 continue
 
             if data.startswith(rdbdata):
                 print("skipping rdbdata")
-                data = data[len(rdbdata):] 
+                rest = data[len(rdbdata):] 
+                data = b''
+                self.handshake_success = True
+                continue
 
             print("master thread data", data)
             if not data:
                 continue
+
+
             command, args, rest = self._parse_data(data)
+            self.bytes_read += (len(data) - len(rest))
             if(command is None):
                 continue
             print("Command for slave: ", command)
@@ -172,7 +181,9 @@ class RedisServer:
 
         # handle GETACK, reply with REPLCONF ACK 0 (encoded correctly)
         elif config_param == "getack":
-            return b"*3\r\n$8\r\nREPLCONF\r\n$3\r\nACK\r\n$1\r\n0\r\n", None
+            # get the number of bytes form self.bytes_read
+            bytes_read = self.bytes_read
+            response = f"*3\r\n$8\r\nREPLCONF\r\n$3\r\nACK\r\n${len(str(bytes_read))}\r\n{bytes_read}\r\n"
         
         # Send an error response for unsupported configuration parameters
         return b"-ERR Unsupported CONFIG parameter\r\n"
