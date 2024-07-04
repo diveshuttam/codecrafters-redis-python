@@ -262,6 +262,27 @@ class RedisServer:
         else:
             print("data: ", data)
             raise ValueError("Unsupported RESP type")
+    
+    def _handle_wait(self, args):
+        # send a getack command to all the number of slaves in arguments (if I am master)
+        num = int(args[0].decode())
+        tms = int(args[1].decode())
+
+        ctime = time.time()*1000
+        exptime = ctime + tms
+
+        
+        if(self.role == "master"):
+            for slave in min(num, len(self.slave_connections)):
+                # send "REPLCONF GETACK *"
+                self.slave_connections[slave].sendall(b"*3\r\n$8\r\nreplconf\r\n$6\r\ngetack\r\n$1\r\n*\r\n")
+                # check the response
+                response = self.slave_connections[slave].recv(1024)
+        
+
+        
+        
+        return b":" + bytes(str(len(self.slave_connections)), 'utf-8') + b"\r\n"
 
     def _command_dispatcher(self):
         return {
@@ -275,7 +296,7 @@ class RedisServer:
             "PSYNC": self._handle_psync,
             "FULLRESYNC": self._handle_fullresync,
             # for wait return back the number of replicas (len slave_connections)
-            "WAIT": lambda args: b":" + bytes(str(len(self.slave_connections)), 'utf-8') + b"\r\n"
+            "WAIT": self._handle_wait
         }
 
     def _handle_client(self, client_socket):
