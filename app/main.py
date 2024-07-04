@@ -237,7 +237,8 @@ class RedisServer:
             return command.decode(), args, b"\r\n".join(rest) if len(rest)>0 else b""
         elif data.startswith(b'+'):
             # split data till \r\n
-            return data[1:].split(b'\r\n')[0], [], data[len(data.split(b'\r\n')[0]) + 2:]
+            print("not a command, just a response", data.split(b'\r\n')[0])
+            return None, [], data[len(data.split(b'\r\n')[0]) + 2:]
         else:
             print("data: ", data)
             raise ValueError("Unsupported RESP type")
@@ -269,6 +270,8 @@ class RedisServer:
             if not data:
                 break
             command, args, rest = self._parse_data(data)
+            if command is None:
+                continue
             handler = dispatcher.get(command)
             print("Command: ", command, "role: ", self.role)
             if handler:
