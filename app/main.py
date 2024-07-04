@@ -74,6 +74,10 @@ class RedisServer:
             rdbdata = b'$88\r\nREDIS0011\xfa\tredis-ver\x057.2.0\xfa\nredis-bits\xc0@\xfa\x05ctime\xc2m\x08\xbce\xfa\x08used-mem\xc2\xb0\xc4\x10\x00\xfa\x08aof-base\xc0\x00\xff\xf0n;\xfe\xc0\xffZ\xa2'
 
             # if data starts with rdbdata, then skip it
+            if data == rdbdata:
+                print("skipping rdbdata")
+                continue
+            
             if data.startswith(rdbdata):
                 print("skipping rdbdata")
                 data = data[len(rdbdata):] 
