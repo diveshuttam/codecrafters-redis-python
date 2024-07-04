@@ -275,7 +275,7 @@ class RedisServer:
         if(self.role == "master"):
             for slave in range(min(num, len(self.slave_connections))):
                 # send "REPLCONF GETACK *"
-                self.slave_connections[slave].sendall(b"*3\r\n$8\r\nreplconf\r\n$6\r\ngetack\r\n$1\r\n*\r\n")
+                self.slave_connections[slave].sendall(b"*3\r\n$8\r\nREPLCONF\r\n$6\r\nGETACK\r\n$1\r\n*\r\n")
                 # check the response
                 response = self.slave_connections[slave].recv(1024)
         
