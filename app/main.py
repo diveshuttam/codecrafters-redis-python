@@ -279,12 +279,8 @@ class RedisServer:
                 # send "REPLCONF GETACK *"
                 self.slave_connections[slave].sendall(b"*3\r\n$8\r\nREPLCONF\r\n$6\r\nGETACK\r\n$1\r\n*\r\n")
                 # check the response
-                try:
-                    # only recieve till timeout
-                    self.slave_connections[slave].settimeout(tms)
-                    response = self.slave_connections[slave].recv(1024)
-                except socket.timeout:
-                    print("timeout")
+                response = self.slave_connections[slave].recv(1024)
+                if response == b"":
                     continue
                 count+=1
         
