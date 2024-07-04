@@ -300,9 +300,7 @@ class RedisServer:
                         print("waiting for slave", slave, self.slave_connections[slave].getpeername())
                         response = self.slave_connections[slave].recv(1024)
                         print("response from slave", response)
-                        sleep = (exptime-time.time()*1000)/1000.0/num/2.0
                         print("sleeping for", sleep)
-                        time.sleep(sleep)
                         
                         if response:
                             doneslaves = doneslaves.union({slave})
@@ -310,6 +308,9 @@ class RedisServer:
                     except BaseException as e:
                         print("exception", e)
                         pass
+
+                    sleep = (exptime-time.time()*1000)/1000.0/num/2.0
+                    time.sleep(sleep)
 
                
             # return count as an integer
