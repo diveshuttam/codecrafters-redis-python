@@ -274,6 +274,7 @@ class RedisServer:
             "REPLCONF": self._handle_replconf,
             "PSYNC": self._handle_psync,
             "FULLRESYNC": self._handle_fullresync,
+            "WAIT": lambda args: b":0\r\n",
         }
 
     def _handle_client(self, client_socket):
