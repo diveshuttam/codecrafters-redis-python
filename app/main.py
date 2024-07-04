@@ -70,6 +70,11 @@ class RedisServer:
                 rest = b""
             else:
                 data = master_socket.recv(1024)
+
+            # ignore the rdb file (starts with '88\r\nREDIS0011' )
+            if data.startswith(b'88\r\nREDIS0011'):
+                print("RDB file received")
+                continue
             print("master thread data", data)
             if not data:
                 break
