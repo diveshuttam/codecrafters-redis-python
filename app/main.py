@@ -88,6 +88,8 @@ class RedisServer:
             if not data:
                 continue
             command, args, rest = self._parse_data(data)
+            if(command is None):
+                continue
             print("Command for slave: ", command)
             handler = self._command_dispatcher().get(command)
             if handler:
