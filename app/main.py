@@ -302,6 +302,7 @@ class RedisServer:
                
             # return count as an integer
             # :7\r\n
+            print("wait response", self.count)
             return b":" + bytes(str(self.count), 'utf-8') + b"\r\n"
 
     def _command_dispatcher(self):
