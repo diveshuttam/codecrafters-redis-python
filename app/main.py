@@ -195,7 +195,7 @@ class RedisServer:
         # Send the empty RDB file to the replica
         response += self._send_empty_rdb()
         
-        response += b"\r\n*3\r\n$8\r\nreplconf\r\n$6\r\ngetack\r\n$1\r\n*\r\n"
+        
 
         # Connect to the slave
         # self._connect_to_slaves()
