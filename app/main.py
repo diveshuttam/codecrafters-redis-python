@@ -274,19 +274,26 @@ class RedisServer:
         # testing : for now sending to all slaves
         num = len(self.slave_connections) 
         count = 0
+        # send the getack command to all the slaves
         if(self.role == "master"):
             for slave in range(min(num, len(self.slave_connections))):
                 # send "REPLCONF GETACK *"
+                # non blocking
+                self.slave_connections[slave].setblocking(0)
                 self.slave_connections[slave].sendall(b"*3\r\n$8\r\nREPLCONF\r\n$6\r\nGETACK\r\n$1\r\n*\r\n")
-                # check the response
-                response = self.slave_connections[slave].recv(1024)
-                if response == b"":
-                    continue
-                count+=1
-        
+            
+            # wait for the response from all the slaves
+            while (time.time()*1000) < exptime and count < num:
+                for slave in range(min(num, len(self.slave_connections))):
+                    try:
+                        response = self.slave_connections[slave].recv(1024)
+                        print("response from slave", response)
+                        if response:
+                            count += 1
+                    except:
+                        pass
 
-        
-        
+               
         return b":" + bytes(str(len(self.count)), 'utf-8') + b"\r\n"
 
     def _command_dispatcher(self):
