@@ -294,7 +294,7 @@ class RedisServer:
                         pass
 
                
-        return b":" + bytes(str(len(self.count)), 'utf-8') + b"\r\n"
+        return b":" + bytes(str(len(count)), 'utf-8') + b"\r\n"
 
     def _command_dispatcher(self):
         return {
