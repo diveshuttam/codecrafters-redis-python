@@ -281,6 +281,7 @@ class RedisServer:
         count = 0
         # send the getack command to all the slaves
         self.count = 0
+        print("in wait, num, slaves", num, len(self.slave_connections))
         if(self.role == "master"):
             for slave in range(min(num, len(self.slave_connections))):
                 # send "REPLCONF GETACK *"
