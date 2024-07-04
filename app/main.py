@@ -193,7 +193,7 @@ class RedisServer:
         elif config_param == "ack":
             self.count += 1
             print("ack received increasing count", self.count)
-            return b"+OK\r\n"
+            return b""
         
         # Send an error response for unsupported configuration parameters
         print("Unsupported CONFIG parameter", config_param, config_value)
@@ -330,7 +330,6 @@ class RedisServer:
             "REPLCONF": self._handle_replconf,
             "PSYNC": self._handle_psync,
             "FULLRESYNC": self._handle_fullresync,
-            # for wait return back the number of replicas (len slave_connections)
             "WAIT": self._handle_wait
         }
 
