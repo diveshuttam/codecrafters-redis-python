@@ -368,16 +368,6 @@ class RedisServer:
             else:
                 client_socket.sendall(b"-ERR unknown command\r\n")
 
-    def replicate_to_slave(self, data, command, slave):
-        slave_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        slave_socket.connect((slave[0], slave[1]))
-
-        if command == "SET":
-            print("replicating SET command")
-            slave_socket.sendall(data)
-            print("sent to slave")
-        slave_socket.close()
-
     def start(self):
         server_socket = socket.create_server(("localhost", self.port), reuse_port=True)
         server_socket.listen(10)
