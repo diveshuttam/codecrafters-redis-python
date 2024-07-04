@@ -330,13 +330,16 @@ class RedisServer:
         if args[0].decode().lower() == "get":
             # get the args[1] and return the value
             config_param = args[1].decode().lower()
+            # the response has to be reurned as an array and not bulk stirng *2\r\n$3\r\ndir\r\n$16\r\n/tmp/redis-files\r\n
             if config_param == "dir":
-                return b"$" + bytes(str(len(self.config["dir"])), 'utf-8') + b"\r\n" + bytes(self.config["dir"], 'utf-8') + b"\r\n"
+                response = f"*2\r\n$3\r\ndir\r\n${len(self.config['dir'])}\r\n{self.config['dir']}\r\n"
+                return bytes(response, 'utf-8')
             elif config_param == "dbfilename":
-                return b"$" + bytes(str(len(self.config["dbfilename"])), 'utf-8') + b"\r\n" + bytes(self.config["dbfilename"], 'utf-8') + b"\r\n"
+                response = f"*2\r\n$9\r\ndbfilename\r\n${len(self.config['dbfilename'])}\r\n{self.config['dbfilename']}\r\n"
+                return bytes(response, 'utf-8')
             else:
                 return b"-ERR unsupported CONFIG parameter\r\n"
-            
+
         return b"-ERR unsupported CONFIG parameter\r\n"
     
     def _command_dispatcher(self):
