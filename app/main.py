@@ -295,7 +295,7 @@ class RedisServer:
                         response = self.slave_connections[slave].recv(1024)
                         print("response from slave", response)
                         if response:
-                            count += 1
+                            self.count += 1
                     except:
                         pass
 
