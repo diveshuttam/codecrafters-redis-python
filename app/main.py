@@ -279,7 +279,7 @@ class RedisServer:
             for slave in range(min(num, len(self.slave_connections))):
                 # send "REPLCONF GETACK *"
                 # non blocking
-                self.slave_connections[slave].setblocking(0)
+                # self.slave_connections[slave].setblocking(0)
                 self.slave_connections[slave].sendall(b"*3\r\n$8\r\nREPLCONF\r\n$6\r\nGETACK\r\n$1\r\n*\r\n")
             
             # wait for the response from all the slaves
