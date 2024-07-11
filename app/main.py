@@ -50,7 +50,7 @@ class RedisServer:
         
         # Parse the RDB file
         # Get the Redis version
-        redis_version = rdb_content[5:12].decode('ascii')
+        redis_version = rdb_content[5:12].decode('utf-8')
         print(f"Redis version: {redis_version}")
         
         # Get the Redis bits
